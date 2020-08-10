@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>树结构测试</title>
+    <script src="../ui-model/easyui/jquery.min.js"></script>
+    <link rel="stylesheet" href="../ui-model/easyui/themes/metro/easyui.css">
+    <link rel="stylesheet" href="../ui-model/easyui/themes/icon.css">
+    <script src="../ui-model/easyui/jquery.easyui.min.js"></script>
+    <script src="../ui-model/easyui/locale/easyui-lang-zh_CN.js"></script>
+    <link rel="stylesheet" href="../ui-model/ztree/css/zTreeStyle/zTreeStyle.css">
+    <script src="../ui-model/ztree/js/jquery.ztree.core.js"></script>
+    <script src="../ui-model/ztree/js/jquery.ztree.excheck.js"></script>
+    <script src="../ui-model/ztree/js/jquery.ztree.exedit.js"></script>
+</head>
+<script>
+    var zTreeObj;
+    var ztreeSetting = {
+        check:{
+            enable:true
+        },
+        async: {
+            enable: true,
+            url: "http://localhost:8080/data/tree.json?size=5000",
+            autoParam: ["id","checked","pId=parentId"],
+            type:'get'
+        },
+        callback:{
+            beforeCheck:function(){
+                return false;
+            },
+        }
+    };
+    function onLoadSuccess(node, data) {
+        var treeDom = $("div.combo-panel.panel-body ul.tree");
+        if (treeDom.length <= 0) {
+            treeDom = $("div.combo-panel.panel-body ul.ztree");
+        }
+        treeDom.attr("id", "ztreeUl")
+        treeDom.addClass("ztree");
+        treeDom.removeClass("tree");
+        treeDom.parent("div").attr("id", "treeDiv");
+        if ($("treeContainer").length <= 0) {
+            $("body").append('<div id="treeContainer" style="display: none;"></div>');
+        }
+        zTreeObj = $.fn.zTree.init(treeDom, ztreeSetting, data);
+    }
+    function onShowPanel() {
+        setTimeout(function(){
+            var treeDom = $("ul#ztreeUl");
+            $("#treeDiv").append(treeDom);
+
+        },0)
+
+    }
+    function onHidePanel() {
+        setTimeout(function(){
+            zTreeObj.expandAll(false);
+            var treeDom = $("ul#ztreeUl");
+            $("#treeContainer").append(treeDom);
+        },0)
+    }
+</script>
+<body>
+<div style="padding:100px 300px;">
+    <input type="" class="easyui-combotree" id="myTree" style="width: 300px;"
+           data-options="url:'http://localhost:8080/data/tree.json',method:'GET'
+           ,onLoadSuccess:onLoadSuccess,onShowPanel:onShowPanel,onHidePanel:onHidePanel">
+</div>
+</body>
+</html>
