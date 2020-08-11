@@ -34,6 +34,9 @@ public class JavaCompiler {
         copyWebRootFile();
         LOG.info("==copy WebRoot结束===");
         LOG.info("==开始制作war包===");
+        Runtime runtime = Runtime.getRuntime();
+        runtime.exec("jar -cvf " + deployPath + ".war" +
+                " * ", null, new File(deployPath));
         LOG.info("==war包制作完成===");
     }
 

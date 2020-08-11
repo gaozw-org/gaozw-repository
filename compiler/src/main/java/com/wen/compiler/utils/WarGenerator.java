@@ -1,14 +1,15 @@
 package com.wen.compiler.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.sun.tools.javac.file.ZipArchive;
+import org.apache.catalina.startup.HostConfig;
+import org.apache.catalina.webresources.JarWarResource;
+
+import java.io.*;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
+import java.util.jar.*;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 描述 制作war包
@@ -18,49 +19,72 @@ import java.util.zip.ZipEntry;
  */
 public class WarGenerator {
     public static void main(String[] args) throws IOException {
-        String projectPath = "H:\\run\\apache-tomcat-8.5.32\\webapps2\\styj";
-        String warPath = "H:\\run\\apache-tomcat-8.5.32\\webapps2\\styj.war";
-        FileOutputStream fout = new FileOutputStream(new File(warPath));
-        Manifest manifest = new Manifest();
+        Runtime runtime = Runtime.getRuntime();
+        runtime.exec("H:\\run\\apache-tomcat-8.5.32\\bin\\startup.bat", null, new File("H:\\run\\apache-tomcat-8.5.32\\bin"));
+//        main2(args);
+        /*FileInputStream fileInputStream = new FileInputStream(new File("H:\\run\\apache-tomcat-8.5.32\\webapps\\styj\\webpage\\index.html"));
+        int len = -1;
+        byte[] data = new byte[1024];
+        while ((len = fileInputStream.read(data)) > 0) {
+            System.out.println(new String(data, "UTF-8"));
 
-        JarOutputStream jarOutputStream = new JarOutputStream(fout,manifest);
-        List<File> list = loopFile(new File(projectPath));
+        }
+        fileInputStream.close();*/
+    }
+    public static void main2(String[] args) throws IOException {
+        String projectPath = "H:\\run\\apache-tomcat-8.5.32\\1123";
+        String warPath = "H:\\run\\apache-tomcat-8.5.32\\webapps\\styj.war";
+        File warFile = new File(warPath);
+        if (warFile.exists()) {
+            warFile.delete();
+        }
+        warFile.createNewFile();
+        warFile.setWritable(true);
+        warFile.setReadable(true);
+        warFile.setExecutable(true);
+        FileOutputStream fout = new FileOutputStream(warFile);
+
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().putValue("Created-By", "1.8.0_172 (Oracle Corporation)");
+        JarOutputStream zipOutputStream = new JarOutputStream(fout, manifest);
+        List<File> list = loopFile(new File(projectPath),true);
         byte[] buffer = new byte[1024];
         for (File file : list) {
+            String jarPath = file.getAbsolutePath().substring(projectPath.length() + 1);
+            //System.out.println("filePath:" + file.getAbsolutePath() + ",jarPath:" + jarPath);
+            if (file.isDirectory()) {
+                System.out.println("dir-" + "filePath:" + file.getAbsolutePath() + ",jarPath:" + jarPath);
+                JarEntry jarEntry = new JarEntry(jarPath + File.separator);
+                zipOutputStream.putNextEntry(jarEntry);
+                zipOutputStream.closeEntry();
+                continue;
+            }
+            System.out.println("file-" + "filePath:" + file.getAbsolutePath() + ",jarPath:" + jarPath);
             FileInputStream fis = new FileInputStream(file);
-            jarOutputStream.putNextEntry(new ZipEntry(file.getAbsolutePath().substring(projectPath.length() + 1)));
+            JarEntry jarEntry = new JarEntry(jarPath);
+            zipOutputStream.putNextEntry(jarEntry);
             int len;
             while ((len = fis.read(buffer)) > 0) {
-                jarOutputStream.write(buffer, 0, len);
+                zipOutputStream.write(buffer, 0, len);
+                zipOutputStream.flush();
             }
-            fis.close();
+            zipOutputStream.closeEntry();
         }
-        jarOutputStream.flush();
-        jarOutputStream.close();
+        zipOutputStream.finish();
+        zipOutputStream.close();
     }
 
-    public static List<File> loopFile(File dir) {
+    public static List<File> loopFile(File dir,boolean rootFlag) {
         List<File> result = new ArrayList<>();
-        if (dir == null) {
-            return result;
-        }
-        if (dir.isFile()) {
-            if (!dir.exists()) {
-                return result;
-            }
-            result.add(dir);
-            return result;
-        }
         File[] files = dir.listFiles();
         for (File file : files) {
             if (file.isFile()) {
                 result.add(file);
                 continue;
             }
-            List<File> tmpList = loopFile(file);
-            if (tmpList != null && tmpList.size() > 0) {
-                result.addAll(tmpList);
-            }
+            result.add(file);
+            result.addAll(loopFile(file, false));
         }
         return result;
     }
