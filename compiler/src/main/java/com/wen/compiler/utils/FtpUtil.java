@@ -8,10 +8,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,6 +57,28 @@ public class FtpUtil {
         } finally {
         }
         return false;
+    }
+
+    public void upload(String localpath, String remotePath) {
+        File file = new File(localpath);
+        String fileName = file.getName();
+        FileInputStream fileInputStream = null;
+        try {
+            fileInputStream = new FileInputStream(file);
+            client.makeDirectory(remotePath);
+            client.storeFile(remotePath + "/" + fileName, fileInputStream);
+        } catch (FileNotFoundException e) {
+            LOG.error("上传文件不存在", e);
+        } catch (IOException e) {
+            LOG.error("文件上传失败", e);
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                }
+            }
+        }
     }
 
     public void download(String filePath, String localPath) {
@@ -141,13 +160,13 @@ public class FtpUtil {
         ftpUtil.setPath("/share");
         boolean login = ftpUtil.login();
         if (login) {
-            List<MyFTPFile> list = ftpUtil.getList("/share", false);
+            ftpUtil.upload("H:\\unzip\\myweb\\web\\WebRoot\\gradle-3.3-all.zip","/share/mine");
+            /*List<MyFTPFile> list = ftpUtil.getList("/share", false);
             for (MyFTPFile file : list) {
                 System.out.println(file.getFilePath() + ":" + file.getFtpFile().getName());
                 ftpUtil.download(file.getFilePath(), "H:\\ftptest");
-            }
+            }*/
             ftpUtil.close();
-//            ftpUtil.download("/share/linux安装redis服务器.txt","H:\\ftptest\\share\\test.txt");
         } else {
             System.out.println("登录失败");
         }
